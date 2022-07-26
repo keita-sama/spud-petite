@@ -1,0 +1,23 @@
+{
+  "name": "spud-petite",
+  "version": "1.1.1",
+  "description": "A petite version of spud.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "discord",
+    "spud",
+    "discord.js",
+    "pagination"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^13.9.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.20.0"
+  }
+}
