@@ -39,7 +39,7 @@ client.on('messageCreate', async (message) => {
 
 Constructor:
 ```js
-new Menu(message: Message, placeholder?: String, options: Array<Object>, time?: Number)
+new Menu(message: Message, placeholder?: String, options: Object[], time?: Number)
 ```
 Example:
 ```js
