@@ -1,62 +1,67 @@
-const { MessageActionRow, MessageButton, version } = require('discord.js');
-const { SpudError } = require('../err');
+const { MessageActionRow, MessageButton } = require('discord.js');
+// const { SpudError } = require('../err');
 
-const rows = {
-    both: new MessageActionRow().addComponents(
-        new MessageButton()
-            .setCustomId('left')
-            .setStyle('PRIMARY')
-            .setLabel('◀').setDisabled(false),
-        new MessageButton()
-            .setCustomId('right')
-            .setStyle('PRIMARY')
-            .setLabel('▶').setDisabled(false),
-    ),
-    right: new MessageActionRow().addComponents(
-        new MessageButton()
-            .setCustomId('left')
-            .setStyle('PRIMARY')
-            .setLabel('◀').setDisabled(true),
-        new MessageButton()
-            .setCustomId('right')
-            .setStyle('PRIMARY')
-            .setLabel('▶').setDisabled(false),
-    ),
-    left: new MessageActionRow().addComponents(
-        new MessageButton()
-            .setCustomId('left')
-            .setStyle('PRIMARY')
-            .setLabel('◀').setDisabled(false),
-        new MessageButton()
-            .setCustomId('right')
-            .setStyle('PRIMARY')
-            .setLabel('▶').setDisabled(true),
-    ),
-    none: new MessageActionRow().addComponents(
-        new MessageButton()
-            .setCustomId('left')
-            .setStyle('PRIMARY')
-            .setLabel('◀').setDisabled(true),
-        new MessageButton()
-            .setCustomId('right')
-            .setStyle('PRIMARY')
-            .setLabel('▶').setDisabled(true),
-    ),
-};
+function checkPage(cur, components, min, max) {
+    switch (cur) {
+        case min:
+            return new MessageActionRow().addComponents(...components.map(btn => btn.customId.startsWith('left') ? btn.setDisabled(true) : btn.setDisabled(false)));
+        case max:
+            return new MessageActionRow().addComponents(...components.map(btn => btn.customId.startsWith('right') ? btn.setDisabled(true) : btn.setDisabled(false)));
+        case 'none':
+            return new MessageActionRow().addComponents(...components.map(btn => btn.setDisabled(true)));
+        case 'all':
+            return new MessageActionRow().addComponents(...components.map(btn => btn.setDisabled(false)));
+        default:
+            return new MessageActionRow().addComponents(...components.map(btn => btn.setDisabled(false)));
+    }
+}
+
+function update(interaction, embedArr, cur, row) {
+    return interaction.update({
+        embeds: [
+            embedArr[cur],
+        ],
+        components: [
+            row,
+        ],
+    });
+}
+
+function createButton(id, emoji, style) {
+    return new MessageButton()
+        .setCustomId(id)
+        .setEmoji(emoji)
+        .setStyle(style);
+}
 
 exports.Pagination = class Pagination {
-    constructor(message, embeds, time) {
+    constructor(message, embeds, time, fastSkip, trashBin) {
         this.message = message;
-        this.embeds = embeds ?? [];
+        this.embeds = embeds;
         this.time = time ?? 5000;
+        this.trashBin = trashBin ?? false;
+        this.fastSkip = fastSkip ?? false;
     }
     async send() {
-        if (!version.startsWith('13')) {
-            throw new SpudError('Incorrect discord.js version, must be a v13');
+        const components = [];
+        const trash = createButton('trash', '🗑', 'DANGER');
+        const right = createButton('right', '▶', 'PRIMARY');
+        const dright = createButton('rightf', '⏭', 'PRIMARY');
+        const left = createButton('left', '◀', 'PRIMARY');
+        const dleft = createButton('leftf', '⏮', 'PRIMARY');
+
+        if (this.trashBin === true) {
+            components.push(left, trash, right);
+        }
+        else {
+            components.push(left, right);
+        }
+        if (this.fastSkip === true) {
+            components.unshift(dleft);
+            components.push(dright);
         }
 
         let currentPage = 0;
-        let currentRow = 'right';
         const filter = m => m.user.id === this.message.author.id;
         const len = this.embeds.length - 1;
 
@@ -65,7 +70,7 @@ exports.Pagination = class Pagination {
                 this.embeds[currentPage],
             ],
             components: [
-                rows[currentRow],
+                checkPage('all', components, 0, len),
             ],
         });
 
@@ -75,35 +80,34 @@ exports.Pagination = class Pagination {
             collector.resetTimer();
             if (i.customId === 'right') {
                 currentPage++;
-                currentPage === len ? currentRow = 'left' : currentRow = 'both';
-                i.update({
-                    embeds: [
-                        this.embeds[currentPage],
-                    ],
-                    components: [
-                        rows[currentRow],
-                    ],
-                });
+                update(i, this.embeds, currentPage, checkPage(currentPage, components, 0, len));
             }
             if (i.customId === 'left') {
                 currentPage--;
-                currentPage === 0 ? currentRow = 'right' : currentRow = 'both';
+                update(i, this.embeds, currentPage, checkPage(currentPage, components, 0, len));
+            }
+            if (i.customId === 'rightf') {
+                currentPage = len;
+                update(i, this.embeds, currentPage, checkPage(currentPage, components, 0, len));
+            }
+            if (i.customId === 'leftf') {
+                currentPage = 0;
+                update(i, this.embeds, currentPage, checkPage(currentPage, components, 0, len));
+            }
+            if (i.customId === 'trash') {
                 i.update({
-                    embeds: [
-                        this.embeds[currentPage],
-                    ],
                     components: [
-                        rows[currentRow],
+                        new MessageActionRow().addComponents(...components.map(btn => btn.setDisabled(true))),
                     ],
                 });
+                collector.stop();
             }
         });
 
         collector.on('end', () => {
-            currentRow = 'none';
             msg.edit({
                 components: [
-                    rows[currentRow],
+                    checkPage('none', components, 0, len),
                 ],
             });
         });

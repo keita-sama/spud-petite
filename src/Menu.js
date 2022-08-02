@@ -1,22 +1,19 @@
-const { MessageActionRow, MessageSelectMenu, version } = require('discord.js');
-const { SpudError } = require('../err');
+const { MessageActionRow, MessageSelectMenu } = require('discord.js');
+// const { SpudError } = require('../err');
 
 exports.Menu = class Menu {
     constructor(message, placeholder, options, time) {
         this.message = message;
-        this.placeholder = placeholder ?? 'Choose an option';
         this.options = options;
+        this.placeholder = placeholder ?? 'Choose an option';
         this.time = time ?? 5000;
     }
     async send() {
-        if (!version.startsWith('13')) {
-            throw new SpudError('Incorrect discord.js version, must be a v13');
-        }
         const filter = m => m.user.id === this.message.author.id;
         const opt = this.options.map(option => {
             return {
                 label: option.label,
-                description: option.description,
+                description: option.description ?? null,
                 value: option.label.toLowerCase().replaceAll(' ', '_'),
                 default: option?.default ?? false,
                 emoji: option?.emoji ?? null,
