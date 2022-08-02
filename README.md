@@ -7,15 +7,27 @@ A petite version of [spud.js](https://www.npmjs.com/package/spud.js). Designed f
 ```
 ### Install
 ```
-npm i spud-petite@latest // 1.1.1
+npm i spud-petite@latest // 1.1.5
 ```
 
+### Changelog 1.1.5
+
+- Added an optional builder to create options for `Menu`
+```js
+const { MenuOption } = require('spud-petite')
+
+const opt1 = new MenuOption()
+    .setLabel('Some Label') // The option name
+    .setValue() // Automatically handled, however custom ids can be passed if you wish.
+    .setEmbed(new MessageEmbed().setTitle('test').setDescription('Monkey')) // Embed displayed
+    .setDescription('munchee') // Description of option
+```
 ### Usage
 
 ##### **Pagination:**
 Constructor:
 ```js
-new Pagination(message: Message, embeds: MessageEmbed[], time?: Number)
+new Pagination(message: Message, embeds: MessageEmbed[], time?: Number, fastSkip?: Boolean, trashBin?: Boolean)
 ```
 Example:
 ```js
@@ -39,7 +51,7 @@ client.on('messageCreate', async (message) => {
 
 Constructor:
 ```js
-new Menu(message: Message, placeholder?: String, options: Object[], time?: Number)
+new Menu(message: Message, placeholder?: String, options: MenuOptions[], time?: Number)
 ```
 Example:
 ```js
@@ -76,7 +88,7 @@ client.on('messageCreate', async (message) => {
 ```
 
 Planned:
-- interaction support
-- switch to `discord.js@14`
 
+- Interaction support [Not near future]
+- Switch to `discord.js@14` [Not near future]
 <sup><sub><sup>While this package is part of the spud.js family, it is NOT developed by the same user(s) that develop the main package</sup></sub></sup>
